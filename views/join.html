@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="author" content="RedFila">
+    <title></title>
+</head>
+<script>
+    var User = function(){
+        this.username = "";
+        this.userid = "";
+        this.userage ="";
+        this.userpwd ="";
+        this.useraddress = "";
+        this.validation = function(){
+            for(var key in this){
+                if(document.getElementById(key)){
+                    var obj = document.getElementById(key);
+                    if(obj.getAttribute("data-val")){
+                        var len = obj.getAttribute("data-val").split(",")[0];
+                        var msg = obj.getAttribute("data-val").split(",")[1];
+                        if(this[key].length<len){
+                            alert(msg);
+                            obj.value="";
+                            obj.focus();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    function login(){
+        var user = new User();
+        for(var key in user){
+            if(document.getElementById(key)){
+                user[key] = document.getElementById(key).value.trim();
+            }
+        }
+        user.validation();
+        var userStr = JSON.stringify(user);
+        var user2 = JSON.parse(userStr);
+        alert(user2.userid);
+    }
+</script>
+<body>
+    <center>
+    <table border='1'>
+        <tr>
+            <th>이름</th>
+            <td><input type='text' name='username' id='username' data-val="2,이름은 2글자 이상입니다!!" ></td>
+        </tr>
+        <tr>
+            <th>나이</th>
+            <td><input type='text' name='userage' id='userage'></td>
+        </tr>
+        <tr>
+            <th>아이디</th>
+            <td><input type='text' name='userid' id='userid' data-val="3,아이디 3글자 이상입니다!!"></td>
+        </tr>
+        <tr>
+            <th>비밀번호</th>
+            <td><input type='password' name='userpwd' id='userpwd'></td>
+        </tr>
+        <tr>
+            <th>주소</th>
+            <td><input type='text' name='useraddress' id='useraddress'></td>
+        </tr>
+        <tr>
+            <td colspan='2' align='center'><input type='button' value='회원가입'onclick='login()'></td>
+        </tr>
+    </table>
+    </center>
+</body>
+</html>
