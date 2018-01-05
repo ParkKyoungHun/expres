@@ -75,19 +75,68 @@ app.get('/api/depart',(req,res,next)=>{
     result["di"] = depart;
     res.json(result);
 });
-app.post('/api/depart',(req,res,next)=>{
-    console.log(req.body);
+app.post('/api/departs', (req,res,next)=>{
     var obj = req.body;
-    var values = [obj.diNo, obj.diName, obj.diDesc, obj.diCnt];
-    console.log(values);
+    var values = [obj.diName, obj.diDesc, obj.diCnt];
+    var sql = "insert into depart_info(diname, didesc, dicnt)";
+    sql += "values(?,?,?)"
     var result = {};
-    result["succeed"] = "ok";
-    res.json(result);
+    var dbCon;
+    con.then(con=>{
+        dbCon = con;
+        return dbCon.query(sql,values);
+    }).then(rows=>{
+        console.log(rows);
+        result["succeed"] = "no";
+        if(rows.affectedRows==1){
+            var diNo = rows.insertId;
+            sql = "select ? as diNo ,count(1) as diCnt from user_info where dino=?";
+            return dbCon.query(sql,[diNo,diNo]);
+        }
+    }).then(rows=>{
+        var result;
+        rows.map(row=>{
+            sql = "update depart_info set dicnt=? where diNo=?"
+            result= dbCon.query(sql,[row.diCnt, row.diNo]);
+        })
+        return result;
+    }).then(rows=>{
+        if(rows.affectedRows==1){
+            result["succeed"] = "ok";
+            result["rows"] = rows;
+        }
+    }).catch(err=>{
+        result["succeed"] = "no";
+    }).then(data=>{
+        res.json(result);
+    });
 });
 
-app.get('/api/depart/:diNo',(req,res,next)=>{
-    sql = "select diNo, diName,diDesc,diCnt from depart_info where diNo=?";
+app.post('/api/departs/update', (req,res,next)=>{
+    var obj = req.body;
+    var values = [obj.diName, obj.diDesc, obj.diCnt,obj.diNo];
+    var sql = "update depart_info";
+    sql += " set diName=?,";
+    sql += " diDesc=?,";
+    sql += " diCnt=?";
+    sql += " where diNo=?";
+    var result = {};
+    con.then(con=>{
+        return con.query(sql,values);
+    }).then(rows=>{
+        console.log(rows);
+        result["succeed"] = "ok";
+        if(rows.affectedRows!=1){
+            result["succeed"]="no";
+        }
+        res.json(result);
+    });
+});
+app.get('/api/departs/:diNo',(req,res,next)=>{
+    var sql = "select diName, diNo, diDesc, diCnt "
+    sql += " from depart_info where diNo=?";
     var diNo = req.params.diNo;
+    console.log(diNo);
     con.then((con)=>{
         return con.query(sql,diNo);
     }).then(rows=>{
@@ -96,26 +145,40 @@ app.get('/api/depart/:diNo',(req,res,next)=>{
 })
 
 
-app.get('/api/depart/list',(req,res,next)=>{
-    sql = "select * from depart_info ";
+app.get('/api/departs',(req,res,next)=>{
+    var sql = "select diName, diNo, diDesc, diCnt from depart_info";
     con.then((con)=>{
         return con.query(sql);
     }).then(rows=>{
+        console.log(rows);
         res.json(rows);
     });
-})
-app.delete('/api/depart/:diNo',(req,res,next)=>{
-    sql = "delete from depart_info where diNo=?";
+});
+app.delete('/api/departs/:diNo',(req,res,next)=>{
+    var sql = "delete from depart_info where diNo=?";
     var diNo = req.params.diNo;
     con.then((con)=>{
         return con.query(sql,diNo);
     }).then(rows=>{
         res.json(rows);
-    }).catch(error=>{
-        console.log("에러 났다!!");
-        res.json(error)
-    });
+    }).catch(errorHandle).
+    then((result)=>{
+        console.log(result);
+        res.json(result);
+    });;
 })
+app.get('/api/userdeparts',(req,res,next)=>{
+    var sql = "select ui.userNo, ui.userName, ui.userAge, ui.userId, ui.userAddress, diName, di.diNo, diDesc, diCnt from user_info";
+    sql +=" ui, depart_info di where ui.dino=di.dino";
+    con.then((con)=>{
+        return con.query(sql);
+    }).catch(errorHandle)
+    .then(rowsHandle)
+    .then(result=>{
+        console.log(result);
+        res.json(result);
+    });
+});
 app.get('/api/users',(req, res, next)=>{
     var result = {};
     var paramObj = JSON.parse(req.query.user);
