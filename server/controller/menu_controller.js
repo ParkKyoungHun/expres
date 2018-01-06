@@ -4,7 +4,7 @@ var mysql = require('promise-mysql');
 var dbConfig = require('../conf/dbconfig.js');
 const con = mysql.createConnection(dbConfig);
 
-router.get('/',selectUserList);
+router.get('/',selectMenu);
 module.exports = router;
 var errorHandle = (err)=>{
     console.log(err);
@@ -24,16 +24,13 @@ var rowsHandle = (rows)=>{
     result["list"] = rows;
     return result;
 }
-
-function selectUserList(req,res,next){
-    var sql = "select ui.userNo, ui.userName, ui.userAge, ui.userId, ui.userAddress, diName, di.diNo, diDesc, diCnt from user_info";
-    sql +=" ui, depart_info di where ui.dino=di.dino";
+function selectMenu(req,res,next){
+    var sql = "select * from menu order by sort";
     con.then((con)=>{
         return con.query(sql);
-    }).catch(errorHandle)
-    .then(rowsHandle)
+    }).then(rowsHandle)
+    .catch(errorHandle)
     .then(result=>{
-        console.log(result);
         res.json(result);
     });
 }
